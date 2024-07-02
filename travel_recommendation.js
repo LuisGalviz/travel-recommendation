@@ -10,33 +10,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Clear previous results
     resultsContainer.innerHTML = "";
-    debugger;
     // Fetch data from the API based on the keyword
     fetch("travel_recommendation_api.json")
       .then((response) => response.json())
       .then((data) => {
-        if (
-          keyword === "beach" ||
-          keyword === "temple" ||
-          keyword === "country"
-        ) {
-          let key;
-          switch (keyword) {
-            case "beach":
-              key = "beaches";
-              break;
-
-            case "temple":
-              key = "temples";
-              break;
-            case "country":
-              key = "countries";
-              break;
-
-            default:
-              break;
-          }
-          displayRecommendations(data[key]);
+        const recommendationType = getRecommendations(keyword);
+        debugger;
+        if (recommendationType) {
+          displayRecommendations(data[recommendationType]);
         } else {
           resultsContainer.innerHTML =
             "<p>No recommendations found for this keyword.</p>";
@@ -55,9 +36,37 @@ document.addEventListener("DOMContentLoaded", function () {
     resultsContainer.innerHTML = "";
   });
 
+  function normalizeKeyword(keyword) {
+    // Normalizar la palabra clave a minúsculas y eliminar espacios adicionales
+    return keyword.trim().toLowerCase();
+  }
+
+  function isSimilarKeyword(keyword, targetKeyword) {
+    // Normalizar ambas palabras clave y compararlas
+    const normalizedKeyword = normalizeKeyword(keyword);
+    const normalizedTargetKeyword = normalizeKeyword(targetKeyword);
+
+    // Verificar si la palabra clave normalizada contiene la palabra clave objetivo
+    return normalizedKeyword.includes(normalizedTargetKeyword);
+  }
+
+  function getRecommendations(keyword) {
+    let key;
+
+    // Normalizar y comparar con palabras clave y variaciones
+    if (isSimilarKeyword(keyword, "beach")) {
+      key = "beaches";
+    } else if (isSimilarKeyword(keyword, "temple")) {
+      key = "temples";
+    } else if (isSimilarKeyword(keyword, "country")) {
+      key = "countries";
+    }
+
+    return key;
+  }
+
   // Function to display recommendations
   function displayRecommendations(recommendations) {
-    debugger;
     recommendations.forEach((recommendation) => {
       const resultElement = document.createElement("div");
       resultElement.classList.add("result");
@@ -66,8 +75,13 @@ document.addEventListener("DOMContentLoaded", function () {
       nameElement.textContent = recommendation.name;
 
       const imageElement = document.createElement("img");
-      imageElement.src = recommendation.imageUrl;
-      imageElement.alt = recommendation.name;
+      if (!recommendation.cities) {
+        imageElement.src = recommendation.imageUrl;
+        imageElement.alt = recommendation.name;
+      } else {
+        imageElement.src = recommendation.cities[0].imageUrl;
+        imageElement.alt = recommendation.cities[0].name;
+      }
 
       const descriptionElement = document.createElement("p");
       descriptionElement.textContent = recommendation.description;
